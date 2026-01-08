@@ -70,6 +70,13 @@
             margin-top: 15px; border-radius: 8px; display: none; color: #fff;
         }
 
+        .wait-msg {
+            color: #ff4444;
+            font-weight: bold;
+            font-size: 1.1rem;
+            line-height: 1.5;
+        }
+
         footer { margin-top: 20px; font-size: 0.7rem; opacity: 0.5; }
     </style>
 </head>
@@ -96,7 +103,30 @@
     const stepText = document.getElementById('step-text');
     const keyBox = document.getElementById('key-box');
 
-    // 1. URL se step check karna
+    // --- 24 HOURS CHECK LOGIC ---
+    function checkWaitTime() {
+        const lastKeyTime = localStorage.getItem('last_key_generated');
+        if (lastKeyTime) {
+            const currentTime = new Date().getTime();
+            const hoursPassed = (currentTime - lastKeyTime) / (1000 * 60 * 60);
+
+            if (hoursPassed < 24) {
+                // User ne 24 ghante ke andar key li hai
+                showLockScreen();
+                return true;
+            }
+        }
+        return false;
+    }
+
+    function showLockScreen() {
+        stepText.innerText = "ACCESS DENIED";
+        timerDisplay.style.display = 'none';
+        instruction.innerHTML = `<span class="wait-msg">𝐁𝐄𝐓𝐄 𝐄𝐊 𝐁𝐀𝐀𝐑 𝐊𝐄𝐘 𝐌𝐈𝐋 𝐃𝐄 𝐃𝐈𝐘𝐀 𝐀𝐁 𝟐𝟒 𝐆𝐇𝐀𝐍𝐓𝐄 𝐆𝐀𝐍𝐃 𝐌𝐀𝐑𝐀 𝐔𝐒𝐊𝐄 𝐁𝐀𝐀𝐃 𝐊𝐄𝐘 𝐃𝐔𝐍𝐆𝐀</span>`;
+        btn.style.display = 'none';
+    }
+
+    // --- URL CHECK ---
     const urlParams = new URLSearchParams(window.location.search);
     const savedStep = urlParams.get('step');
 
@@ -141,13 +171,10 @@
         timerDisplay.style.display = 'none';
 
         btn.onclick = function() {
-            // YAHAN APNA SHORTENER LINK DAALEIN
-            // Destination URL me apni site ka link ?step=4 ke saath dein
-            // Example: https://short.com/st?url=https://yourlink.com?step=4
-            let mySite = window.location.href.split('?')[0]; // Aapki site ka asli address
+            let mySite = window.location.href.split('?')[0]; 
             let destination = mySite + "?step=4"; 
-            let shortenerURL = "https://earnlinks.in/XTVyS" + encodeURIComponent(destination);
-            
+            // Aapka Earnlinks link
+            let shortenerURL = "https://earnlinks.in/XTVyS?url=" + encodeURIComponent(destination);
             window.location.href = shortenerURL; 
         };
     }
@@ -159,6 +186,9 @@
     }
 
     function step5() {
+        // YAHAN TIME SAVE HOGA
+        localStorage.setItem('last_key_generated', new Date().getTime());
+        
         stepText.innerText = "Step 5 of 5: Success!";
         instruction.innerText = "Your key has been generated successfully!";
         keyBox.style.display = 'block';
@@ -171,15 +201,17 @@
     }
 
     // --- INITIALIZE ---
-    // Agar URL me ?step=4 hai to direct step 4 pe jayega
-    if (savedStep === "4") {
-        step4();
-    } else {
-        step1();
-    }
+    window.onload = () => {
+        if (!checkWaitTime()) {
+            if (savedStep === "4") {
+                step4();
+            } else {
+                step1();
+            }
+        }
+    };
 
 </script>
 
 </body>
 </html>
-
